@@ -6,6 +6,7 @@ from exp.exp_imputation import Exp_Imputation
 from exp.exp_short_term_forecasting import Exp_Short_Term_Forecast
 from exp.exp_anomaly_detection import Exp_Anomaly_Detection
 from exp.exp_classification import Exp_Classification
+from utils.print_args import print_args
 import random
 import numpy as np
 
@@ -41,6 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('--label_len', type=int, default=48, help='start token length')
     parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
     parser.add_argument('--seasonal_patterns', type=str, default='Monthly', help='subset for M4')
+    parser.add_argument('--inverse', action='store_true', help='inverse output data', default=False)
 
     # inputation task
     parser.add_argument('--mask_rate', type=float, default=0.25, help='mask ratio')
@@ -69,7 +71,8 @@ if __name__ == '__main__':
                         help='time features encoding, options:[timeF, fixed, learned]')
     parser.add_argument('--activation', type=str, default='gelu', help='activation')
     parser.add_argument('--output_attention', action='store_true', help='whether to output attention in ecoder')
-
+    parser.add_argument('--channel_independence', type=int, default=0,
+                        help='1: channel dependence 0: channel independence for FreTS model')
     # optimization
     parser.add_argument('--num_workers', type=int, default=10, help='data loader num workers')
     parser.add_argument('--itr', type=int, default=1, help='experiments times')
@@ -104,7 +107,7 @@ if __name__ == '__main__':
         args.gpu = args.device_ids[0]
 
     print('Args in experiment:')
-    print(args)
+    print_args(args)
 
     if args.task_name == 'long_term_forecast':
         Exp = Exp_Long_Term_Forecast
@@ -122,6 +125,7 @@ if __name__ == '__main__':
     if args.is_training:
         for ii in range(args.itr):
             # setting record of experiments
+            exp = Exp(args)  # set experiments
             setting = '{}_{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
                 args.task_name,
                 args.model_id,
@@ -141,7 +145,6 @@ if __name__ == '__main__':
                 args.distil,
                 args.des, ii)
 
-            exp = Exp(args)  # set experiments
             print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
             exp.train(setting)
 
